@@ -1,90 +1,128 @@
-# Football Analysis — Multi-Camera Player Tracking
+# ⚽ Football Analysis — Multi-Camera Player Tracking
 
-Turn amateur football footage (Veo multi-camera) into calibrated, StatsBomb-format
-player-tracking data. An end-to-end computer-vision pipeline built from scratch:
-camera-motion estimation, pitch calibration, detection, multi-object tracking,
-multi-camera fusion, and an interactive review tool.
+> An end-to-end computer-vision pipeline that turns amateur multi-camera football
+> footage into **calibrated, StatsBomb-format player-tracking data** — camera-motion
+> estimation, pitch calibration, detection, multi-object tracking, multi-camera
+> fusion, and an interactive review tool. Built from scratch as a solo project.
 
-> Personal project · CPU-only (GPU planned) · currently validated on short test clips.
+![Assembled player run paths across three camera views](assets/run_paths.png)
 
-## Pipeline
+<p align="center"><sub>Run paths of all tracked players, fused from three camera views onto a single pitch.</sub></p>
 
-```
-video → camera motion → pitch calibration → detection → tracking → cleanup
-      → teams → multi-camera fusion (global IDs) → analytics (run paths, heatmaps, …)
-```
+---
+
+## What it does
+
+Amateur clubs record matches with fixed multi-camera systems (e.g. Veo), but the raw
+video is just that — video. This project reconstructs **where every player is, in real
+pitch coordinates, on every frame**, and exports it in the same format professional
+analysts use (StatsBomb, 120×80). From there: run paths, heatmaps, distances covered,
+team shape, and more.
+
+The hard parts — a moving virtual camera, tiny far-away players, players occluding each
+other, and stitching three overlapping views into one consistent identity per player —
+are solved step by step, and every step is validated **visually**, not just by metrics.
 
 ## Highlights
 
-- **Camera-motion module** — per-frame homography onto a reference frame (ORB features
-  on a grass mask, direct-to-reference matching, temporal smoothing, a photometric
-  verifier that checks the chosen transform per frame).
+- **Camera-motion module** — estimates a per-frame homography onto a reference frame
+  (ORB features on a grass mask, direct-to-reference matching, temporal smoothing, a
+  photometric verifier that checks the chosen transform each frame).
 - **Pitch calibration** — image↔pitch homography (least-squares) from the real venue
-  dimensions, snap-to-line/circle, a leave-one-out advisor for the least consistent point.
-- **Detection** — a football-specific YOLOv8x model used as an offline auto-labeler;
-  two-stage deduplication (body-part fragments, glued track pairs), ball/artifact removal
-  by box shape, and an off-field filter for spectators/staff.
-- **Tracking** — ByteTrack driven directly on the pre-computed boxes (milliseconds instead
-  of 9 s/frame), with association done in the **stabilized reference frame** so camera pan
-  no longer breaks it; Kalman filter + Hungarian assignment.
-- **Multi-camera fusion** — union-find merge of spatio-temporally coincident tracks across
-  the three views into **global player IDs**, with automatic frame-offset sync.
+  dimensions, with snap-to-line/circle and a leave-one-out consistency advisor.
+- **Detection + cleanup** — a football-specific YOLO model used as an offline
+  auto-labeler, then two-stage deduplication (body-part fragments, glued track pairs),
+  ball/artifact removal, and an off-field filter for spectators and staff.
+- **Tracking** — ByteTrack driven directly on the pre-computed boxes, with association
+  done in the **stabilized reference frame** so camera pan no longer breaks it
+  (Kalman + Hungarian).
+- **Multi-camera fusion** — spatio-temporally coincident tracks across the three views
+  are merged into **global player IDs** via union-find, with automatic frame-offset sync.
 - **Interactive review tool** (`tools/review/`) — a local browser app backed by a Python
-  **standard-library** server (HTTP range for video scrubbing, no framework): three synced
-  videos with box/ID overlays, per-camera **and** global ID filtering, A/B comparison of two
-  runs, a coupled run-path pitch map, per-track feedback capture, and dated nightly snapshots.
-- **Analytics** — run paths, team heatmaps, player distances (real metres), team compactness
-  and formation, all in StatsBomb pitch coordinates (120×80).
+  **standard-library** server: three synced videos with overlays, per-camera **and**
+  global ID filtering, A/B comparison of two runs, a coupled run-path pitch map,
+  per-track feedback capture, and dated nightly snapshots.
+- **Analytics** — run paths, team heatmaps, player distances (real metres), team
+  compactness and formation, all in StatsBomb pitch coordinates.
 
-## Engineering approach
+## Project structure
 
-- **Visual proof over metrics** — every change validated against rendered images; several
-  times a metric (track count, brightness score) was misleading and only the visual told the
-  truth.
-- **Measure before fixing** — problems characterized on the real data before any threshold
-  was changed.
-- **Honest negative results** — approaches that regressed on this material were rejected
-  rather than shipped; limitations are named explicitly.
-- **Living documentation** — see [`ARCHITECTURE.md`](ARCHITECTURE.md) (module-by-module
-  breakdown) and [`PLAN.md`](PLAN.md) (roadmap + changelog).
+```text
+football-analysis/
+├── src/                  Core pipeline — importable Python package
+│   ├── motion/             Camera-motion estimation (per-frame homography)
+│   ├── calibration/        Image↔pitch homography, venue geometry, snap/advisor
+│   ├── detection/          Detection parsing, de-duplication & filters
+│   ├── tracking/           ByteTrack driver, stitching, smoothing, appearance
+│   ├── analytics/          Teams, possession, events, physical metrics, plots,
+│   │                       multi-camera assembly (global IDs)
+│   ├── visualization/      Pitch overlays, annotated video rendering
+│   ├── export/             StatsBomb / CSV export
+│   └── pipeline · config · core · video · evaluation
+├── tools/                Command-line tools + the review web app
+│   └── review/             Local browser tool: synced review, A/B, feedback
+├── config/               Per-clip configs, calibrations, tracker settings
+├── docs/                 Early planning docs (vision, strategy, data model — German)
+├── test/                 Unit tests
+├── assets/               Images used in this README
+├── ARCHITECTURE.md       Detailed, up-to-date module-by-module reference (German)
+└── PLAN.md               Prioritized roadmap & changelog
+```
 
 ## Tech stack
 
-Python · OpenCV · ultralytics YOLO (YOLOv8x) · ByteTrack · NumPy / Pandas ·
-projective geometry / homography · mplsoccer · HTML / JS / Canvas · StatsBomb data format
-
-## Repository layout
-
-| Path | Contents |
-|------|----------|
-| `src/` | pipeline modules — `motion/`, `calibration/`, `detection/`, `tracking/`, `analytics/`, `visualization/`, `export/` |
-| `tools/` | CLI tools (auto-labeling, pipeline, assembly, nightly runner) + the review web app in `tools/review/` |
-| `config/` | per-clip configs, calibrations, tracker settings |
-| `ARCHITECTURE.md` | detailed, up-to-date module reference (German) |
-| `PLAN.md` | prioritized roadmap and changelog |
+**Python** · OpenCV · ultralytics YOLO · ByteTrack · Kalman filter + Hungarian
+assignment · projective geometry / homography · NumPy · Pandas · mplsoccer ·
+HTML / JS / Canvas · StatsBomb data format
 
 ## Running it
 
 ```bash
 pip install -r requirements.txt
 
-# rebuild the production tracking for the test clips (needs the data + model, see below)
+# rebuild the production tracking for the test clips
 python -m tools.xmodel_pipeline
-# merge the cameras into global IDs
+# merge the three cameras into global player IDs
 python -m tools.assemble_x
-# interactive review tool  →  http://127.0.0.1:8731/
+# launch the interactive review tool  →  http://127.0.0.1:8731/
 python -m tools.review.server
 ```
 
-## Data & models not included
+> The pipeline needs source footage and a football-trained YOLO model, which are **not**
+> included (see *Data & privacy* below). Point it at your own Veo-style clips.
 
-The raw footage shows **real people** and is intentionally **not** part of this repository
-for privacy reasons; the model weights and generated outputs are excluded for size. The code
-is the deliverable — point the pipeline at your own Veo-style footage and a football-trained
-YOLO model.
+## Example outputs
+
+| Run paths (whole match, fused) | Team heatmap |
+|:---:|:---:|
+| ![run paths](assets/run_paths.png) | ![heatmap](assets/heatmap.png) |
+
+## Engineering approach
+
+- **Visual proof over metrics** — every change is validated against rendered images;
+  more than once a metric (track count, a brightness score) was misleading and only the
+  picture told the truth.
+- **Measure before fixing** — problems are characterized on the real data before any
+  threshold is touched.
+- **Honest negative results** — approaches that regressed on this material were rejected
+  rather than shipped, and the remaining limitations are named explicitly.
+- **Living documentation** — see [`ARCHITECTURE.md`](ARCHITECTURE.md) (module reference)
+  and [`PLAN.md`](PLAN.md) (roadmap + changelog).
 
 ## Status & limitations
 
-A working prototype on ~20-second test clips, CPU-only. The main open problems — same-team
-ID switches at crossings, and running a full match at scale — need a re-identification model
-and GPU acceleration. The current state and next steps are tracked in [`PLAN.md`](PLAN.md).
+A working prototype on ~20-second test clips, CPU-only. The main open problems —
+same-team ID switches at crossings, and running a full 90-minute match at scale — need a
+re-identification model and GPU acceleration. Current state and next steps live in
+[`PLAN.md`](PLAN.md).
+
+## Data & privacy
+
+The raw footage shows **real people** and is intentionally **not** part of this
+repository, for privacy reasons; model weights and generated outputs are excluded for
+size. The code is the deliverable. Third-party dependencies carry their own licenses
+(notably ultralytics YOLO under AGPL-3.0).
+
+---
+
+<sub>Solo project · computer vision · multi-object tracking · sports analytics.</sub>
