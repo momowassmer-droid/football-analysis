@@ -1,0 +1,36 @@
+# Football analysis pipeline configuration.
+# All knobs tuned this session live here so runs are reproducible
+# without editing code.
+
+video:
+  input: "data/raw/spiel2.mp4"
+
+output:
+  detections: "data/output/detections/detections.csv"
+
+detection:
+  model: "yolov8n.pt"      # yolov8n (fast) .. yolov8x (max accuracy)
+  imgsz: 1280              # YOLO input size; higher = better for distant players, slower
+  nms_iou: 0.5             # lower keeps overlapping players (behind each other) apart
+  confidence: 0.25
+
+tracking:
+  tracker: "config/trackers/bytetrack_occlusion.yaml"
+
+field:
+  enabled: true                                        # remove people outside the pitch
+  calibration: "config/fields/spiel2_clip_calib.json"  # homography from tools/calibrate_field.py (preferred)
+  region: "config/fields/spiel2_clip.json"             # polygon fallback (tools/mark_field.py)
+  margin: 2.0                                          # pitch-unit tolerance at touchlines
+
+track_filter:
+  enabled: true            # remove tracks predominantly beyond touch-/goal-lines
+  pitch_margin: 0.5        # tolerance for calibration errors at the lines
+  min_inside_ratio: 0.60   # at least 60% of a track's foot points must be on-pitch
+
+stitching:
+  enabled: true            # merge fragmented tracks of the same player
+  max_frame_gap: 30        # max frames a player may be missing and still be re-linked
+  max_distance_px: 80.0    # max pixel jump allowed when re-linking
+
+evaluate: true             # print a tracking-quality report after the run

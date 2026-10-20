@@ -1,0 +1,29 @@
+# BoT-SORT with online appearance ReID, tuned for football.
+#
+# Chosen over ByteTrack because it associates by *appearance* during tracking,
+# not just IoU/motion -- so a player crossing behind another is re-matched by
+# how they look, preventing the ID switch instead of repairing it afterwards.
+#
+# GMC (camera-motion compensation) is set to "none" on purpose: the detector
+# runs on frames we already stabilised (detection.stabilize=true), so the
+# camera pan is gone before the tracker sees them. Running GMC on top would
+# compensate an already-compensated frame. If stabilisation is ever turned
+# off, switch gmc_method to sparseOptFlow.
+#
+# ReID uses the detector's own backbone features (model: auto) -- no extra
+# model to download or audit, and only a modest per-detection cost.
+
+tracker_type: botsort
+track_high_thresh: 0.25
+track_low_thresh: 0.1
+new_track_thresh: 0.25
+track_buffer: 90        # long, like our ByteTrack config: survive occlusions
+match_thresh: 0.8
+fuse_score: True
+
+gmc_method: none        # frames are pre-stabilised; see note above
+
+with_reid: True
+model: auto             # use detector backbone features, no separate ReID net
+proximity_thresh: 0.5   # min IoU for two tracks to be ReID-comparable
+appearance_thresh: 0.8  # min appearance similarity to accept a ReID match

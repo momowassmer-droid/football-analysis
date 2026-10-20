@@ -1,0 +1,5 @@
+[project]
+name = "football-analysis"
+version = "0.1.0"
+description = "Automated football video analysis"
+requires-python = ">=3.14"

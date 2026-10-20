@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tracking-Review</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Tracking-Review</h1>
+    <div class="controls">
+      <label>Lauf A
+        <select id="run"></select>
+      </label>
+      <label>Lauf B
+        <select id="runB"></select>
+      </label>
+      <span class="mode" id="mode">
+        <button data-mode="A" class="active">A</button><button data-mode="B">B</button><button data-mode="AB">A|B</button>
+      </span>
+      <button id="play">▶ Play</button>
+      <button id="step-back" title="1 Frame zurück">⏮</button>
+      <button id="step-fwd" title="1 Frame vor">⏭</button>
+      <input id="scrub" type="range" min="0" max="599" value="0" step="1">
+      <span id="counter" class="counter">f0 / 599</span>
+      <label class="speed">Tempo
+        <select id="speed">
+          <option value="0.25">0.25×</option>
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <section class="filter">
+    <span class="filter-label">Nur IDs:</span>
+    <input id="id-input" type="text" placeholder="z. B. M5, L12, R3 — leer = alle" autocomplete="off">
+    <button id="id-clear">alle zeigen</button>
+    <span id="id-hint" class="hint">IDs sind pro Kamera (M=Mitte, L=Links, R=Rechts). Klick auf eine Box wählt sie an/ab.</span>
+  </section>
+
+  <main id="grid">
+    <!-- panes injected by app.js -->
+  </main>
+
+  <section class="pitchwrap">
+    <div class="pitch-head">
+      <b>Laufwege</b>
+      <span class="hint">der ausgewählten IDs (Lauf A). Leere Auswahl = nichts.</span>
+    </div>
+    <canvas id="pitch" width="720" height="480"></canvas>
+  </section>
+
+  <section class="feedback">
+    <div class="fb-head"><b>Feedback</b><span class="hint">zu einem Track — wird pro Lauf (A) gespeichert.</span></div>
+    <div class="fb-form">
+      <select id="fb-clip" title="Kamera"></select>
+      <input id="fb-id" type="number" placeholder="Track-ID">
+      <select id="fb-issue" title="Problemtyp">
+        <option value="Abbruch">Abbruch (endet zu früh)</option>
+        <option value="Verwechslung">Verwechslung / ID-Swap</option>
+        <option value="Doppelung">Doppelung</option>
+        <option value="Geist">Geist-Track (kein Spieler)</option>
+        <option value="Sonstiges">Sonstiges</option>
+      </select>
+      <input id="fb-note" type="text" placeholder="Notiz (optional)">
+      <span id="fb-frame" class="hint">f–</span>
+      <button id="fb-save">Speichern</button>
+    </div>
+    <ul id="fb-list" class="fb-list"></ul>
+  </section>
+
+  <footer id="status">lädt …</footer>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+video: "data/raw/spiel2_clip.mp4"
+output_dir: "data/output/benchmarks"
+
+experiments:
+  - name: n_occlusion_conf025
+    model: "yolov8n.pt"
+    tracker: "config/trackers/bytetrack_occlusion.yaml"
+    imgsz: 1280
+    confidence: 0.25
+    nms_iou: 0.50
+
+  - name: n_balanced_conf035
+    model: "yolov8n.pt"
+    tracker: "config/trackers/bytetrack_balanced.yaml"
+    imgsz: 1280
+    confidence: 0.35
+    nms_iou: 0.50
+
+  - name: s_balanced_conf030
+    model: "yolov8s.pt"
+    tracker: "config/trackers/bytetrack_balanced.yaml"
+    imgsz: 1280
+    confidence: 0.30
+    nms_iou: 0.50

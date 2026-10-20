@@ -1,0 +1,34 @@
+# Config for the 5-second test clip (full end-to-end workflow demo).
+
+video:
+  input: "data/raw/spiel2_clip.mp4"
+
+output:
+  detections: "data/output/spiel2_clip/detections/detections_raw.csv"
+
+detection:
+  model: "yolo11n.pt"      # best player detection found this session
+  imgsz: 1920
+  nms_iou: 0.5
+  confidence: 0.25
+
+tracking:
+  tracker: "config/trackers/bytetrack_occlusion.yaml"
+
+field:
+  enabled: true
+  calibration: "config/fields/spiel2_clip_calib.json"
+  region: "config/fields/spiel2_clip.json"
+  margin: 2.0
+
+track_filter:
+  enabled: true
+  pitch_margin: 0.5
+  min_inside_ratio: 0.60
+
+stitching:
+  enabled: true
+  max_frame_gap: 30
+  max_distance_px: 80.0
+
+evaluate: true

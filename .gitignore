@@ -1,0 +1,35 @@
+# --- Virtuelle Umgebung ---
+.venv/
+venv/
+env/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# --- Editoren ---
+.vscode/
+.idea/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Daten: Videos echter Personen, Labels, Bilder, Zwischen-/Ausgabedaten ---
+# Aus Datenschutz- und Größengründen NICHT im Repo.
+data/
+
+# --- Modelle (groß; Herkunft/Lizenz separat beziehen) ---
+models/
+*.pt
+
+# --- Persönliche Notizen (nicht öffentlich) ---
+CV_PROJEKT.md
+
+# --- Müll / OS ---
+zzzzz/
+.DS_Store
+Thumbs.db
